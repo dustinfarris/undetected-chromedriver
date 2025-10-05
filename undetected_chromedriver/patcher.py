@@ -174,7 +174,7 @@ class Patcher(object):
             pass
 
         release = self.fetch_release_number()
-        self.version_main = release.version[0]
+        self.version_main = release.major
         self.version_full = release
         self.unzip_package(self.fetch_package())
         return self.patch()
@@ -282,7 +282,7 @@ class Patcher(object):
         if self.is_old_chromedriver:
             download_url = "%s/%s/%s" % (
                 self.url_repo,
-                self.version_full.vstring,
+                str(self.version_full),
                 zip_name,
             )
         else:
@@ -290,7 +290,7 @@ class Patcher(object):
             download_url = (
                 "https://storage.googleapis.com/chrome-for-testing-public/%s/%s/%s"
             )
-            download_url %= (self.version_full.vstring, self.platform_name, zip_name)
+            download_url %= (str(self.version_full), self.platform_name, zip_name)
 
         logger.debug("downloading from %s" % download_url)
         return urlretrieve(download_url)[0]
