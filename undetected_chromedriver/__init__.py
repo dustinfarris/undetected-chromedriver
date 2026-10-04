@@ -248,6 +248,12 @@ class Chrome(selenium.webdriver.chrome.webdriver.WebDriver):
 
         finalize(self, self._ensure_close, self)
         self.debug = debug
+        if not version_main and not driver_executable_path:
+            # match the installed browser rather than the latest stable
+            # release, which runs ahead of it for days after each release
+            version_main = browser_version_main(
+                browser_executable_path or find_chrome_executable()
+            )
         self.patcher = Patcher(
             executable_path=driver_executable_path,
             force=patcher_force_close,
@@ -850,6 +856,30 @@ class Chrome(selenium.webdriver.chrome.webdriver.WebDriver):
             and hasattr(self.service.process, "kill")
         ):
             self.service.process.kill()
+
+
+def browser_version_main(executable_path):
+    """
+    Reads the major version of the browser at executable_path
+
+    Returns
+    -------
+    version_main : int or None
+        None when the browser is missing or its version can't be read
+    """
+    if not executable_path:
+        return None
+    try:
+        output = subprocess.run(
+            [executable_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    match = re.search(r"(\d+)\.\d+\.\d+", output)
+    return int(match[1]) if match else None
 
 
 def find_chrome_executable():
