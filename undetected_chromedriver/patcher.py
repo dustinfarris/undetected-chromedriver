@@ -115,6 +115,8 @@ class Patcher(object):
         if self.platform.endswith("darwin"):
             if self.is_old_chromedriver:
                 self.platform_name = "mac64"
+            elif platform.machine() == "arm64":
+                self.platform_name = "mac-arm64"
             else:
                 self.platform_name = "mac-x64"
             self.exe_name %= ""
@@ -405,6 +407,14 @@ class Patcher(object):
                     )
                 fh.seek(0)
                 fh.write(new_content)
+        if sys.platform.endswith("darwin"):
+            # rewriting the binary invalidates its signature, and macOS kills
+            # an arm64 executable with a broken signature on exec
+            subprocess.run(
+                ["codesign", "--force", "--sign", "-", self.executable_path],
+                check=True,
+                capture_output=True,
+            )
         logger.debug(
             "patching took us {:.2f} seconds".format(time.perf_counter() - start)
         )
